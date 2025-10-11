@@ -1,0 +1,25 @@
+{
+  "name": "emotion-playlist",
+  "version": "1.0.0",
+  "description": "A web application for generating music playlists based on emotions.",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "dependencies": {
+    "axios": "^0.21.1",
+    "lucide-react": "^0.545.0",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2",
+    "react-scripts": "4.0.3"
+  },
+  "devDependencies": {
+    "eslint": "^7.14.0",
+    "eslint-plugin-react": "^7.27.0"
+  },
+  "homepage": ".",
+  "license": "MIT"
+}

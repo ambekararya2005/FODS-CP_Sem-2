@@ -1,0 +1,66 @@
+Sample Emotion Messages for Testing
+====================================
+
+HAPPY / JOY:
+- "I feel so happy today! Everything is going great!"
+- "Just got promoted at work! I'm over the moon!"
+- "Spending time with friends and laughing nonstop"
+- "The sun is shining and I feel amazing"
+
+SAD / SORROW:
+- "I feel so lonely and miss everyone"
+- "Today has been really tough and I'm feeling down"
+- "I lost someone dear to me and my heart aches"
+- "Everything feels gray and hopeless right now"
+
+EXCITED / ENTHUSIASM:
+- "I can't wait for tomorrow! So many great things ahead!"
+- "Just bought tickets to my dream concert!"
+- "Starting my new adventure and I'm pumped!"
+- "This is the most exciting day of my life!"
+
+ANGRY / FRUSTRATION:
+- "I'm so frustrated with everything going wrong"
+- "People keep letting me down and I'm angry"
+- "Nothing is working out the way it should"
+- "I've had enough of these problems"
+
+CALM / NEUTRAL:
+- "Just having a regular day, nothing special"
+- "Sitting here enjoying a cup of tea"
+- "Everything is peaceful and steady"
+- "Another ordinary moment in life"
+
+ANXIOUS / WORRIED:
+- "I'm really worried about the upcoming presentation"
+- "Can't stop thinking about all the things that could go wrong"
+- "Feeling nervous and my mind won't rest"
+- "So much uncertainty and it's making me anxious"
+
+GRATEFUL / THANKFUL:
+- "I'm so grateful for all the support I've received"
+- "Feeling blessed to have such wonderful people in my life"
+- "Thank you universe for these beautiful moments"
+- "Appreciating all the little things today"
+
+LOVE / AFFECTION:
+- "I love spending time with the people who matter"
+- "My heart feels so full of love right now"
+- "Caring deeply for those around me"
+- "Love is all around and I feel it"
+
+===================================
+Tips for Using These Examples:
+===================================
+
+1. Try different emotions to see how the AI classifier performs
+2. Combine multiple emotions in one message
+3. Use varying sentence lengths and structures
+4. Test with both obvious and subtle emotional expressions
+5. Observe how the playlist changes with different inputs
+
+Sample Multi-Emotion Messages:
+- "I'm happy but also a bit nervous about the future"
+- "Feeling sad yet hopeful that things will improve"
+- "Excited and grateful for this opportunity"
+- "Angry but trying to stay calm and rational"

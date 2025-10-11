@@ -1,0 +1,265 @@
+"""
+ONNX Model Export Script
+Exports the Hugging Face emotion classification model to ONNX format
+for optimized inference and cross-platform deployment
+"""
+
+import torch
+from transformers import AutoTokenizer, AutoModelForSequenceClassification
+from pathlib import Path
+import onnx
+import onnxruntime as ort
+import numpy as np
+
+# Model configuration
+MODEL_NAME = "j-hartmann/emotion-english-distilroberta-base"
+ONNX_OUTPUT_PATH = Path("../onnx/emotion_model.onnx")
+MAX_LENGTH = 512
+
+def export_to_onnx():
+    """
+    Export Hugging Face model to ONNX format
+    """
+    print(f"Loading model: {MODEL_NAME}")
+    tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
+    model = AutoModelForSequenceClassification.from_pretrained(MODEL_NAME)
+    
+    # Set model to evaluation mode
+    model.eval()
+    
+    # Create dummy input for tracing
+    dummy_text = "I am feeling happy today!"
+    inputs = tokenizer(
+        dummy_text,
+        return_tensors="pt",
+        truncation=True,
+        max_length=MAX_LENGTH,
+        padding="max_length"
+    )
+    
+    # Get input names
+    input_names = ['input_ids', 'attention_mask']
+    output_names = ['logits']
+    
+    # Dynamic axes for variable batch size and sequence length
+    dynamic_axes = {
+        'input_ids': {0: 'batch_size', 1: 'sequence_length'},
+        'attention_mask': {0: 'batch_size', 1: 'sequence_length'},
+        'logits': {0: 'batch_size'}
+    }
+    
+    # Create output directory
+    ONNX_OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
+    
+    print(f"Exporting model to ONNX format...")
+    print(f"Output path: {ONNX_OUTPUT_PATH}")
+    
+    # Export to ONNX
+    torch.onnx.export(
+        model,
+        (inputs['input_ids'], inputs['attention_mask']),
+        str(ONNX_OUTPUT_PATH),
+        input_names=input_names,
+        output_names=output_names,
+        dynamic_axes=dynamic_axes,
+        opset_version=14,
+        do_constant_folding=True,
+        export_params=True
+    )
+    
+    print("✓ ONNX export completed successfully!")
+    
+    # Verify the exported model
+    verify_onnx_model(str(ONNX_OUTPUT_PATH))
+    
+    # Save tokenizer config
+    save_tokenizer_config(tokenizer)
+    
+    return str(ONNX_OUTPUT_PATH)
+
+def verify_onnx_model(onnx_path):
+    """
+    Verify the exported ONNX model
+    
+    Args:
+        onnx_path (str): Path to ONNX model
+    """
+    print("\nVerifying ONNX model...")
+    
+    # Check model validity
+    onnx_model = onnx.load(onnx_path)
+    onnx.checker.check_model(onnx_model)
+    print("✓ ONNX model is valid")
+    
+    # Test inference
+    print("\nTesting ONNX inference...")
+    test_onnx_inference(onnx_path)
+
+def test_onnx_inference(onnx_path):
+    """
+    Test inference with ONNX Runtime
+    
+    Args:
+        onnx_path (str): Path to ONNX model
+    """
+    # Load tokenizer
+    tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
+    
+    # Create inference session
+    session = ort.InferenceSession(onnx_path)
+    
+    # Test texts
+    test_texts = [
+        "I am so happy and excited!",
+        "This is terrible and makes me angry.",
+        "I feel sad and lonely today."
+    ]
+    
+    emotion_labels = ["anger", "disgust", "fear", "joy", "neutral", "sadness", "surprise"]
+    
+    print("\nTest Results:")
+    print("-" * 60)
+    
+    for text in test_texts:
+        # Tokenize
+        inputs = tokenizer(
+            text,
+            return_tensors="np",
+            truncation=True,
+            max_length=MAX_LENGTH,
+            padding="max_length"
+        )
+        
+        # Run inference
+        outputs = session.run(
+            None,
+            {
+                'input_ids': inputs['input_ids'].astype(np.int64),
+                'attention_mask': inputs['attention_mask'].astype(np.int64)
+            }
+        )
+        
+        # Get predictions
+        logits = outputs[0]
+        probabilities = np.exp(logits) / np.sum(np.exp(logits), axis=-1, keepdims=True)
+        predicted_class = np.argmax(probabilities, axis=-1)[0]
+        confidence = probabilities[0][predicted_class]
+        
+        emotion = emotion_labels[predicted_class]
+        
+        print(f"\nText: {text}")
+        print(f"Emotion: {emotion}")
+        print(f"Confidence: {confidence:.4f}")
+    
+    print("-" * 60)
+    print("✓ ONNX inference test completed successfully!")
+
+def save_tokenizer_config(tokenizer):
+    """
+    Save tokenizer configuration for later use
+    
+    Args:
+        tokenizer: Hugging Face tokenizer
+    """
+    config_path = ONNX_OUTPUT_PATH.parent / "tokenizer_config.json"
+    
+    config = {
+        "vocab_size": tokenizer.vocab_size,
+        "max_length": MAX_LENGTH,
+        "model_name": MODEL_NAME,
+        "padding_token": tokenizer.pad_token,
+        "eos_token": tokenizer.eos_token,
+        "bos_token": tokenizer.bos_token,
+        "unk_token": tokenizer.unk_token,
+    }
+    
+    import json
+    with open(config_path, 'w') as f:
+        json.dump(config, f, indent=2)
+    
+    print(f"\n✓ Tokenizer config saved to: {config_path}")
+
+def optimize_onnx_model(onnx_path):
+    """
+    Optimize ONNX model for inference (optional)
+    
+    Args:
+        onnx_path (str): Path to ONNX model
+    """
+    try:
+        from onnxruntime.transformers import optimizer
+        
+        optimized_path = str(ONNX_OUTPUT_PATH.parent / "emotion_model_optimized.onnx")
+        
+        print("\nOptimizing ONNX model...")
+        optimized_model = optimizer.optimize_model(
+            onnx_path,
+            model_type='bert',
+            num_heads=12,
+            hidden_size=768
+        )
+        
+        optimized_model.save_model_to_file(optimized_path)
+        print(f"✓ Optimized model saved to: {optimized_path}")
+        
+        return optimized_path
+        
+    except ImportError:
+        print("⚠ ONNX optimizer not available. Install with: pip install onnxruntime-tools")
+        return onnx_path
+
+def get_model_info(onnx_path):
+    """
+    Display information about the ONNX model
+    
+    Args:
+        onnx_path (str): Path to ONNX model
+    """
+    import os
+    
+    model = onnx.load(onnx_path)
+    
+    print("\n" + "=" * 60)
+    print("ONNX Model Information")
+    print("=" * 60)
+    print(f"Model Path: {onnx_path}")
+    print(f"File Size: {os.path.getsize(onnx_path) / (1024*1024):.2f} MB")
+    print(f"IR Version: {model.ir_version}")
+    print(f"Producer: {model.producer_name}")
+    print(f"Opset Version: {model.opset_import[0].version}")
+    
+    print("\nInputs:")
+    for input_tensor in model.graph.input:
+        print(f"  - {input_tensor.name}: {input_tensor.type}")
+    
+    print("\nOutputs:")
+    for output_tensor in model.graph.output:
+        print(f"  - {output_tensor.name}: {output_tensor.type}")
+    
+    print("=" * 60)
+
+if __name__ == "__main__":
+    print("=" * 60)
+    print("Emotion Classification Model - ONNX Export")
+    print("=" * 60)
+    
+    try:
+        # Export model
+        onnx_path = export_to_onnx()
+        
+        # Display model info
+        get_model_info(onnx_path)
+        
+        # Optional: Optimize model
+        # optimized_path = optimize_onnx_model(onnx_path)
+        
+        print("\n" + "=" * 60)
+        print("Export completed successfully!")
+        print("=" * 60)
+        print(f"\nYou can now use the ONNX model at: {onnx_path}")
+        print("For inference, use ONNX Runtime in Python, C++, or other languages.")
+        
+    except Exception as e:
+        print(f"\n❌ Error during export: {e}")
+        import traceback
+        traceback.print_exc()
