@@ -42,10 +42,18 @@ int main(int argc, char* argv[]) {
         }
         
         // Filter songs by emotions
-        auto filteredSongs = playlist.filterByEmotions(emotions);
+        SongNode* filteredSongs = playlist.filterByEmotions(emotions);
         
         // Output as JSON
         std::cout << playlist.toJson(filteredSongs) << std::endl;
+        
+        // Clean up the filtered songs list (since it's a new list created by filterByEmotions)
+        SongNode* current = filteredSongs;
+        while (current != nullptr) {
+            SongNode* next = current->next;
+            delete current;
+            current = next;
+        }
         
         return 0;
         
